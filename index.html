@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Precast Weight Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light dark;
+--bg:light-dark(#ffffff,#1a1a19);--ink:light-dark(#111110,#efefec);--mute:light-dark(#5d5d58,#a3a39d);
+--plane:light-dark(#d8d8d4,#2a2a28);--plane2:light-dark(#efefec,#222220);--line:light-dark(#c4c4bf,#3b3b38);
+--field:light-dark(#ffffff,#121211);--yel:#ffe600;--onyel:#111110;--neg:light-dark(#b42318,#ff8a7a)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Hanken Grotesk",system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(24px,4vw,56px) max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+header.band{background:var(--plane);padding-bottom:28px}
+h1{font-size:clamp(32px,4.4vw,48px);line-height:1.05;margin:0 0 6px;font-weight:700;text-wrap:balance;letter-spacing:-.01em}
+.sub{color:var(--mute);margin:0 0 22px;max-width:62ch}
+.meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+label.f{display:block;font-size:13px;color:var(--mute);font-weight:600}
+input,select{font:inherit;font-size:16px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:9px 10px;min-height:44px;width:100%}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid var(--yel);outline-offset:1px;border-color:var(--ink)}
+input[type=number]{text-align:right;font-variant-numeric:tabular-nums}
+input[type=checkbox]{width:22px;min-height:22px;height:22px;accent-color:var(--ink)}
+.main{display:grid;grid-template-columns:440px minmax(0,1fr);gap:clamp(20px,3vw,40px);align-items:start}
+section.card{border-top:3px solid var(--ink);padding:18px 0 26px}
+section.card h2{font-size:24px;margin:0;font-weight:700}
+.hd{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.hd .tot{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.note{color:var(--mute);font-size:14px;margin:0 0 12px}
+.rows{display:grid;gap:10px}
+.row{display:grid;gap:8px;align-items:end;background:var(--plane2);border-radius:8px;padding:10px}
+.row.c{grid-template-columns:110px minmax(0,1.3fr) 120px repeat(3,minmax(0,1fr)) 70px 64px 44px}
+.row.c.vol{grid-template-columns:110px minmax(0,1.3fr) 120px minmax(0,3fr) 70px 64px 44px}
+.row.r{grid-template-columns:110px minmax(0,1fr) 70px minmax(0,1fr) minmax(0,1fr) 44px}
+.row.m{grid-template-columns:110px 130px repeat(3,minmax(0,1fr)) minmax(0,1fr) 44px}
+.row .out{font-variant-numeric:tabular-nums;font-size:14px;text-align:right;white-space:nowrap;align-self:center;padding-top:16px}
+.row.ded{box-shadow:inset 3px 0 0 var(--neg)}
+.row.ded .out{color:var(--neg)}
+.chk{display:flex;flex-direction:column;align-items:center;gap:6px}
+button{font:inherit;font-weight:600;min-height:44px;border-radius:6px;cursor:pointer;border:1px solid var(--ink);background:var(--bg);color:var(--ink);padding:8px 14px}
+button.x{width:44px;padding:0;font-size:22px;line-height:1;border-color:var(--line);color:var(--mute)}
+button.x:hover{color:var(--neg);border-color:var(--neg)}
+button.add{margin-top:10px;border-style:dashed}
+button.solid{background:var(--ink);color:var(--bg)}
+.side{position:sticky;top:12px}.side.tall{position:static}
+.sh{display:flex;justify-content:space-between;gap:8px;font-weight:700;font-size:14px;margin-top:14px;padding-top:10px;border-top:2px solid var(--onyel);font-variant-numeric:tabular-nums}
+.tag{background:var(--yel);color:var(--onyel);border-radius:10px;padding:16px 18px 14px;box-shadow:0 1px 0 #0002,0 12px 30px -14px #0006}
+.tag .hole{display:none}
+.tag .lbl{font-size:14px;font-weight:600}
+.big{font-size:clamp(48px,6vw,72px);font-weight:800;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.big small{font-size:24px;font-weight:600;letter-spacing:0;margin-left:6px}
+.kg{font-variant-numeric:tabular-nums;font-weight:500;margin-top:4px}
+.split{display:flex;height:12px;border-radius:3px;overflow:hidden;margin:12px 0 8px;background:#0001;border:1px solid var(--onyel)}
+.split i{display:block;height:100%}
+.leg{display:grid;gap:1px;font-size:13px}
+.leg div{display:grid;grid-template-columns:14px minmax(0,1fr) auto auto;gap:8px;align-items:center;font-variant-numeric:tabular-nums}
+.leg .sw{width:12px;height:12px;border:1px solid var(--onyel)}
+.leg .v{text-align:right;white-space:nowrap}.leg .p{text-align:right;width:3.2em;opacity:.75}
+.leg .sep{border-top:1px solid #0003;margin-top:6px;padding-top:6px;font-weight:700}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}.acts button{min-height:40px;padding:6px 10px}
+.acts button{border-color:var(--onyel);background:transparent;color:var(--onyel);flex:1}
+.acts button.solid{background:var(--onyel);color:var(--yel)}
+.acts .wipe{flex:0 0 auto}
+.acts .wipe.arm{background:#b42318;border-color:#b42318;color:#fff}
+.msg{font-size:13px;min-height:1.3em;margin-top:8px}
+.msg button{min-height:32px;padding:2px 10px;margin-left:8px;border-color:var(--onyel);background:transparent;color:var(--onyel)}
+details.set summary{cursor:pointer;font-size:24px;font-weight:700;list-style:none;display:flex;justify-content:space-between;min-height:44px;align-items:center}
+details.set summary::after{content:"+";font-weight:400}
+details.set[open] summary::after{content:"–"}
+.dens{display:grid;grid-template-columns:minmax(0,260px) auto;gap:12px;align-items:end;margin:8px 0 18px}
+table{border-collapse:collapse;width:100%;max-width:520px;font-variant-numeric:tabular-nums}
+table.sum{max-width:none;font-size:13px;color:var(--onyel);margin-top:4px}table.sum td,table.sum th{padding:3px 3px;border-bottom:1px solid #0002}table.sum th{color:var(--onyel);opacity:.7;font-size:12px}table.sum .n{text-align:right;white-space:nowrap}table.sum tr.sub td{font-weight:700;border-bottom:1px solid #0005}table.sum tfoot td{border-top:2px solid var(--onyel);font-weight:800;border-bottom:0}.scroll{overflow-x:auto}
+th,td{text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+th{font-size:13px;color:var(--mute);font-weight:600}
+td input{min-height:40px}
+.samp{font-size:13px;color:var(--mute);margin:10px 0 0}
+footer{color:var(--mute);font-size:13px}
+@media(max-width:1400px){.row.c,.row.c.vol{grid-template-columns:repeat(6,minmax(0,1fr))}
+ .row.c>:nth-child(1){grid-column:span 2}.row.c>:nth-child(2){grid-column:span 4}.row.c>:nth-child(3){grid-column:span 2}
+ .row.c:not(.vol)>:nth-child(4),.row.c:not(.vol)>:nth-child(5),.row.c:not(.vol)>:nth-child(6){grid-column:span 2}
+ .row.c.vol>:nth-child(4){grid-column:span 4}
+ .row.c .qty{grid-column:span 2}.row.c .chk{grid-column:span 1}.row.c .out{grid-column:span 2}.row.c .x{grid-column:span 1;justify-self:end}
+ .row.r,.row.m{grid-template-columns:repeat(6,minmax(0,1fr))}
+ .row.r>*,.row.m>*{grid-column:span 2}.row.r .x,.row.m .x{grid-column:span 1;justify-self:end}.row.r .out,.row.m .out{grid-column:span 1}}
+@media(max-width:900px){.main{grid-template-columns:minmax(0,1fr)}.side{position:static}.meta{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.meta{grid-template-columns:minmax(0,1fr)}.row .out{padding-top:0}}
+@media print{.acts,button,.msg{display:none}}
+</style>
+</head>
+<body>
+<header class="band"><div class="wrap">
+  <h1>Precast weight calculator</h1>
+  <p class="sub">Concrete volume × density, plus rebar and BRC mesh, gives the lifting weight of one precast unit.</p>
+  <div class="meta">
+    <label class="f">Product / unit<input id="m-prod" placeholder="e.g. TS 1200×1200"></label>
+    <label class="f">Drawing no.<input id="m-dwg"></label>
+    <label class="f">Prepared by<input id="m-by"></label>
+    <label class="f">Date<input id="m-date" type="date"></label>
+  </div>
+</div></header>
+
+<div class="band"><div class="wrap main">
+  <aside class="side">
+  <div class="tag" id="tag" aria-live="polite">
+    <div class="hole"></div>
+    <div class="lbl">Precast weight per unit</div>
+    <div class="big"><span id="t-tonne">0.000</span><small>tonne</small></div>
+    <div class="kg" id="t-kg">0.00 kg</div>
+    <div class="split" id="t-split"></div>
+    <div class="leg" id="t-leg"></div>
+    <div class="sh"><span>Steel by bar size</span><span id="h-steel"></span></div>
+    <table class="sum" id="sum"></table>
+    <div class="acts">
+      <button class="solid" id="b-pdf" type="button">Save PDF</button>
+      <button id="b-copy" type="button">Copy summary</button>
+      <button id="b-wipe" type="button" class="wipe">Clear entries</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+  </aside>
+
+  <div>
+    <section class="card">
+      <div class="hd"><h2>Concrete</h2><span class="tot" id="h-conc"></span></div>
+      <p class="note">Enter each piece by dimensions in metres (m) or as a volume in m³. Tick “Deduct” for openings and cut-outs.</p>
+      <div class="rows" id="rows-c"></div>
+      <button class="add" type="button" data-add="c">+ Add concrete piece</button>
+    </section>
+
+    <section class="card">
+      <div class="hd"><h2>Rebar</h2><span class="tot" id="h-bar"></span></div>
+      <p class="note">One row per bar mark. Length is the cut length of one bar in metres (m).</p>
+      <div class="rows" id="rows-r"></div>
+      <button class="add" type="button" data-add="r">+ Add bar</button>
+    </section>
+
+    <section class="card">
+      <div class="hd"><h2>BRC mesh</h2><span class="tot" id="h-mesh"></span></div>
+      <p class="note">Mesh weight per m² comes from two layers of bars at 200 mm (from the bar table below), or type your own kg/m².</p>
+      <div class="rows" id="rows-m"></div>
+      <button class="add" type="button" data-add="m">+ Add mesh sheet</button>
+    </section>
+
+
+    <section class="card">
+      <details class="set" id="set">
+        <summary>Density &amp; bar table</summary>
+        <div class="dens">
+          <label class="f">Concrete density (kg/m³)<input id="dens" type="number" step="0.01" min="0"></label>
+          <button type="button" id="b-reset">Reset to defaults</button>
+        </div>
+        <table><thead><tr><th>Bar size</th><th style="text-align:right">Weight (kg/m)</th><th></th></tr></thead><tbody id="bars"></tbody></table>
+        <button class="add" type="button" id="b-addsize">+ Add bar size</button>
+      </details>
+      <p class="samp" id="samp">A sample chamber unit is loaded so you can see how it works. <button type="button" id="b-clear" style="min-height:36px;padding:4px 10px;margin-left:6px">Clear all</button></p>
+    </section>
+  </div>
+</div></div>
+
+<footer class="band" style="padding-top:0"><div class="wrap">Weight (tonne) = (total concrete volume × density + rebar kg + mesh kg) ÷ 1000. Inputs are remembered in this browser.</div></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script>
+{
+const DEF_BARS=[["T5",0.1543],["T6",0.22194],["T7",0.302085],["T8",0.39456],["T8.3",0.4251],["T9",0.499365],["T10",0.6165],["T12",0.88776],["T16",1.57824],["T20",2.466],["T10 CQ",0.56],["T12 CQ",0.765]];
+const DEF_DENS=2406.53;
+const MESH=[["A6","T6"],["A7","T7"],["A8","T8"],["A9","T9"],["A10","T10"]];
+const SECT=["Wall","Base","Lid","Other"];
+const pad=i=>String(i).padStart(2,"0");
+const SMARK=[...Array.from({length:20},(_,i)=>"AS"+pad(i+1)),...Array.from({length:10},(_,i)=>"SB"+pad(i+1))];
+const fixS=o=>{if(!SMARK.includes(o.s))o.s=SMARK[0]};
+const COL={Wall:"#111110",Base:"#55554f",Lid:"#9a9a93",Other:"#c9c9c2",Rebar:"#d2430f",Mesh:"#f08c5a"};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const n=v=>{const x=parseFloat(v);return isFinite(x)?x:0};
+const f=(v,d)=>v.toLocaleString("en-MY",{minimumFractionDigits:d,maximumFractionDigits:d});
+let uid=1;const id=()=>"i"+(uid++);
+
+const sample=()=>({
+  meta:{prod:"Chamber 1200×1200",dwg:"",by:"",date:new Date().toISOString().slice(0,10)},
+  dens:DEF_DENS,bars:DEF_BARS.map(b=>[...b]),
+  c:[{id:id(),s:"Wall",d:"Long wall",mode:"dim",L:1.5,W:0.15,T:1.2,V:0,q:2,ded:false},
+     {id:id(),s:"Wall",d:"Short wall",mode:"dim",L:1.2,W:0.15,T:1.2,V:0,q:2,ded:false},
+     {id:id(),s:"Base",d:"Base slab",mode:"dim",L:1.5,W:1.5,T:0.15,V:0,q:1,ded:false},
+     {id:id(),s:"Lid",d:"Cover slab",mode:"dim",L:1.5,W:1.5,T:0.15,V:0,q:1,ded:false},
+     {id:id(),s:"Lid",d:"Manhole opening",mode:"dim",L:0.6,W:0.6,T:0.15,V:0,q:1,ded:true}],
+  r:[{id:id(),s:"AS01",z:"T10",q:32,len:1.4},{id:id(),s:"AS02",z:"T10",q:24,len:5.6},
+     {id:id(),s:"AS03",z:"T12",q:20,len:1.4},{id:id(),s:"AS04",z:"T12",q:20,len:1.4}],
+  m:[{id:id(),s:"SB01",z:"A7",L:1.4,W:1.4,q:1,kg:0}]
+});
+const blank=()=>({meta:{prod:"",dwg:"",by:"",date:new Date().toISOString().slice(0,10)},dens:st.dens,bars:st.bars,
+  c:[{id:id(),s:"Wall",d:"",mode:"dim",L:0,W:0,T:0,V:0,q:1,ded:false}],r:[{id:id(),s:"AS01",z:"T10",q:0,len:0}],m:[]});
+
+let st,isSample=true;
+try{const s=JSON.parse(localStorage.getItem("pwc-v3")||"null");if(s&&s.c){st=s;isSample=!!s._sample;
+  for(const k of["c","r","m"])st[k].forEach(o=>o.id=id());}}catch(e){}
+if(!st)st=sample(),st._sample=true;
+const save=()=>{try{localStorage.setItem("pwc-v3",JSON.stringify(st))}catch(e){}};
+
+const bw=z=>{const b=st.bars.find(b=>b[0]===z);return b?n(b[1]):0};
+const meshKg=o=>{if(o.z==="Custom")return n(o.kg);const m=MESH.find(m=>m[0]===o.z);return m?2*bw(m[1])/0.2:0};
+const opt=(arr,v)=>arr.map(a=>`<option${a===v?" selected":""}>${esc(a)}</option>`).join("");
+const num=(k,lab,v,step="1")=>`<label class="f">${lab}<input type="number" min="0" step="${step}" data-k="${k}" value="${esc(v||"")}"></label>`;
+
+function cVol(o){const v=o.mode==="vol"?n(o.V):n(o.L)*n(o.W)*n(o.T);return v*n(o.q)*(o.ded?-1:1)}
+function rKg(o){return n(o.q)*n(o.len)*bw(o.z)}
+function mKg(o){return n(o.L)*n(o.W)*n(o.q)*meshKg(o)}
+
+function renderC(){$("rows-c").innerHTML=st.c.map(o=>`<div class="row c${o.mode==="vol"?" vol":""}${o.ded?" ded":""}" data-id="${o.id}" data-t="c">
+  <label class="f">Section<select data-k="s">${opt(SECT,o.s)}</select></label>
+  <label class="f">Description<input data-k="d" value="${esc(o.d)}"></label>
+  <label class="f">Input by<select data-k="mode"><option value="dim"${o.mode==="dim"?" selected":""}>L×W×T</option><option value="vol"${o.mode==="vol"?" selected":""}>Volume</option></select></label>
+  ${o.mode==="vol"?num("V","Volume (m³)",o.V,"0.0001"):num("L","Length (m)",o.L,"0.001")+num("W","Width (m)",o.W,"0.001")+num("T","Thick/Height (m)",o.T,"0.001")}
+  <span class="qty">${num("q","Qty",o.q)}</span>
+  <label class="f chk">Deduct<input type="checkbox" data-k="ded"${o.ded?" checked":""}></label>
+  <span class="out"></span><button class="x" type="button" aria-label="Remove row">×</button></div>`).join("")}
+function renderR(){const sz=st.bars.map(b=>b[0]);st.r.forEach(fixS);$("rows-r").innerHTML=st.r.map(o=>`<div class="row r" data-id="${o.id}" data-t="r">
+  <label class="f">Section<select data-k="s">${opt(SMARK,o.s)}</select></label>
+  <label class="f">Bar size<select data-k="z">${opt(sz.includes(o.z)?sz:[o.z,...sz],o.z)}</select></label>
+  ${num("q","Nos",o.q)}${num("len","Length (m)",o.len,"0.001")}
+  <span class="out"></span><button class="x" type="button" aria-label="Remove row">×</button></div>`).join("")}
+function renderM(){st.m.forEach(fixS);$("rows-m").innerHTML=st.m.length?st.m.map(o=>`<div class="row m" data-id="${o.id}" data-t="m">
+  <label class="f">Section<select data-k="s">${opt(SMARK,o.s)}</select></label>
+  <label class="f">Mesh<select data-k="z">${opt([...MESH.map(m=>m[0]),"Custom"],o.z)}</select></label>
+  ${num("L","Length (m)",o.L,"0.001")}${num("W","Width (m)",o.W,"0.001")}
+  ${o.z==="Custom"?num("kg","kg/m²",o.kg,"0.01"):num("q","Sheets",o.q)}
+  <span class="out"></span><button class="x" type="button" aria-label="Remove row">×</button></div>`).join(""):`<p class="note" style="margin:0">No mesh in this unit.</p>`}
+function renderBars(){$("bars").innerHTML=st.bars.map((b,i)=>`<tr data-i="${i}"><td><input data-b="0" value="${esc(b[0])}" aria-label="Bar size"></td>
+  <td><input type="number" step="0.0001" min="0" data-b="1" value="${esc(b[1])}" aria-label="Weight kg per m"></td>
+  <td style="width:52px"><button class="x" type="button" aria-label="Remove size">×</button></td></tr>`).join("")}
+function renderAll(){for(const k of["prod","dwg","by","date"])$("m-"+k).value=st.meta[k]||"";$("dens").value=st.dens;
+  renderC();renderR();renderM();renderBars();$("samp").style.display=isSample?"":"none";calc()}
+
+const nextMark=(arr,d="AS01")=>{const last=arr.at(-1);if(!last)return d;const i=SMARK.indexOf(last.s);return SMARK[Math.min(i+1,SMARK.length-1)]||d};
+function steel(){
+  const order=st.bars.map(b=>b[0]);const R={},M={};
+  st.r.forEach(o=>{const k=o.z||"-";const g=R[k]||(R[k]={nos:0,len:0,kg:0,marks:[]});g.nos+=n(o.q);g.len+=n(o.q)*n(o.len);g.kg+=rKg(o);if(!g.marks.includes(o.s))g.marks.push(o.s)});
+  st.m.forEach(o=>{const k=o.z;const g=M[k]||(M[k]={sh:0,area:0,kg:0,marks:[]});g.sh+=n(o.q);g.area+=n(o.L)*n(o.W)*n(o.q);g.kg+=mKg(o);if(!g.marks.includes(o.s))g.marks.push(o.s)});
+  const mo=[...MESH.map(m=>m[0]),"Custom"];
+  const rr=Object.keys(R).sort((a,b)=>order.indexOf(a)-order.indexOf(b)).map(k=>({k,...R[k]}));
+  const mm=Object.keys(M).sort((a,b)=>mo.indexOf(a)-mo.indexOf(b)).map(k=>({k,...M[k]}));
+  return{rr,mm,rkg:rr.reduce((a,g)=>a+g.kg,0),mkg:mm.reduce((a,g)=>a+g.kg,0)};
+}
+function renderSum(){const S=steel(),tot=S.rkg+S.mkg;
+  const head=`<thead><tr><th>Bar</th><th class="n">Nos</th><th class="n">m / m²</th><th class="n">kg</th></tr></thead>`;
+  const rows=[...S.rr.map(g=>`<tr><td>${esc(g.k)}</td><td class="n">${f(g.nos,0)}</td><td class="n">${f(g.len,2)}</td><td class="n">${f(g.kg,3)}</td></tr>`),
+    S.rr.length?`<tr class="sub"><td colspan="3">Rebar subtotal</td><td class="n">${f(S.rkg,3)}</td></tr>`:"",
+    ...S.mm.map(g=>`<tr><td>BRC ${esc(g.k)}</td><td class="n">${f(g.sh,0)}</td><td class="n">${f(g.area,2)}</td><td class="n">${f(g.kg,3)}</td></tr>`),
+    S.mm.length?`<tr class="sub"><td colspan="3">BRC subtotal</td><td class="n">${f(S.mkg,3)}</td></tr>`:""].join("");
+  $("sum").innerHTML=head+`<tbody>${rows||'<tr><td colspan="4">No rebar or mesh yet.</td></tr>'}</tbody><tfoot><tr><td colspan="3">Total steel</td><td class="n">${f(tot,3)}</td></tr></tfoot>`;
+  $("h-steel").textContent=f(tot,3)+" kg";
+}
+function totals(){
+  const sec={Wall:0,Base:0,Lid:0,Other:0};st.c.forEach(o=>sec[o.s]+=cVol(o));
+  const vol=Object.values(sec).reduce((a,b)=>a+b,0),dens=n(st.dens);
+  const bar=st.r.reduce((a,o)=>a+rKg(o),0),mesh=st.m.reduce((a,o)=>a+mKg(o),0);
+  const conc=vol*dens,kg=conc+bar+mesh;return{sec,vol,dens,conc,bar,mesh,kg,t:kg/1000};
+}
+function calc(){
+  document.querySelectorAll(".row").forEach(r=>{const t=r.dataset.t,o=st[t].find(x=>x.id===r.dataset.id);if(!o)return;
+    r.querySelector(".out").textContent=t==="c"?f(cVol(o),4)+" m³":t==="r"?f(rKg(o),3)+" kg":f(mKg(o),3)+" kg"+(o.z!=="Custom"?" · "+f(meshKg(o),3)+" kg/m²":"")});
+  const T=totals();
+  $("t-tonne").textContent=f(T.t,3);$("t-kg").textContent=f(T.kg,3)+" kg";
+  $("h-conc").textContent=f(T.vol,3)+" m³ · "+f(T.conc,3)+" kg";$("h-bar").textContent=f(T.bar,3)+" kg";$("h-mesh").textContent=f(T.mesh,3)+" kg";
+  const parts=[...SECT.map(s=>[s,Math.max(0,T.sec[s]*T.dens),f(T.sec[s],3)+" m³"]),["Rebar",T.bar,""],["Mesh",T.mesh,""]].filter(p=>p[1]>0);
+  const sum=parts.reduce((a,p)=>a+p[1],0)||1;
+  $("t-split").innerHTML=parts.map(p=>`<i style="width:${p[1]/sum*100}%;background:${COL[p[0]]}" title="${p[0]}"></i>`).join("");
+  $("t-leg").innerHTML=parts.map(p=>`<div><span class="sw" style="background:${COL[p[0]]}"></span><span>${p[0]}${p[2]?" <span style='opacity:.7'>"+p[2]+"</span>":""}</span><span class="v">${f(p[1],3)} kg</span><span class="p">${f(p[1]/sum*100,0)}%</span></div>`).join("")
+   +`<div class="sep"><span></span><span>Concrete ${f(T.vol,3)} m³ @ ${f(T.dens,2)}</span><span class="v">${f(T.kg,3)} kg</span><span class="p"></span></div>`;
+  renderSum();save();return T;
+}
+function touch(){if(isSample){isSample=false;st._sample=false;$("samp").style.display="none"}}
+
+document.addEventListener("input",e=>{const el=e.target;
+  const row=el.closest(".row");
+  if(row&&el.dataset.k){const o=st[row.dataset.t].find(x=>x.id===row.dataset.id);const k=el.dataset.k;
+    o[k]=el.type==="checkbox"?el.checked:el.value;touch();
+    if(k==="mode"||(k==="z"&&row.dataset.t==="m")){({c:renderC,m:renderM})[row.dataset.t]()}
+    if(k==="ded")row.classList.toggle("ded",el.checked);calc();return}
+  if(el.id&&el.id.startsWith("m-")){st.meta[el.id.slice(2)]=el.value;touch();save();return}
+  if(el.id==="dens"){st.dens=el.value;touch();calc();return}
+  if(el.dataset.b){const i=+el.closest("tr").dataset.i;st.bars[i][+el.dataset.b]=el.dataset.b==="1"?el.value:el.value.trim();touch();
+    if(el.dataset.b==="0")renderR();calc()}
+});
+document.addEventListener("change",e=>{if(e.target.dataset.b==="0")renderR()});
+document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  if(b.classList.contains("x")){const row=b.closest(".row");touch();
+    if(row){st[row.dataset.t]=st[row.dataset.t].filter(x=>x.id!==row.dataset.id);({c:renderC,r:renderR,m:renderM})[row.dataset.t]();calc()}
+    else{const tr=b.closest("tr");st.bars.splice(+tr.dataset.i,1);renderBars();renderR();calc()}return}
+  const a=b.dataset.add;if(a){touch();
+    if(a==="c")st.c.push({id:id(),s:"Wall",d:"",mode:"dim",L:0,W:0,T:0,V:0,q:1,ded:false}),renderC();
+    if(a==="r")st.r.push({id:id(),s:nextMark(st.r),z:st.r.at(-1)?.z||"T10",q:0,len:0}),renderR();
+    if(a==="m")st.m.push({id:id(),s:nextMark(st.m,"SB01"),z:"A7",L:0,W:0,q:1,kg:0}),renderM();
+    calc();const rows=$("rows-"+a).querySelectorAll(".row");rows[rows.length-1]?.querySelector("input")?.focus();}
+});
+$("b-addsize").onclick=()=>{st.bars.push(["",0]);renderBars();$("bars").querySelector("tr:last-child input").focus()};
+$("b-reset").onclick=()=>{st.dens=DEF_DENS;st.bars=DEF_BARS.map(b=>[...b]);renderAll();flash("Density and bar table reset to defaults.")};
+$("b-clear").onclick=()=>{st=blank();isSample=false;st._sample=false;renderAll()};
+
+let mt;const flash=t=>{$("msg").textContent=t;clearTimeout(mt);mt=setTimeout(()=>$("msg").textContent="",4000)};
+
+let armT,undo=null;const wipe=$("b-wipe");
+const disarm=()=>{clearTimeout(armT);wipe.classList.remove("arm");wipe.textContent="Clear entries"};
+wipe.onclick=()=>{
+  if(!wipe.classList.contains("arm")){wipe.classList.add("arm");wipe.textContent="Tap again to clear everything";armT=setTimeout(disarm,3500);return}
+  disarm();undo=JSON.stringify(st);st=blank();isSample=false;st._sample=false;renderAll();
+  $("msg").innerHTML='All entries cleared.<button type="button" id="b-undo">Undo</button>';clearTimeout(mt);
+  mt=setTimeout(()=>{$("msg").textContent="";undo=null},10000);
+  $("b-undo").onclick=()=>{if(!undo)return;st=JSON.parse(undo);for(const k of["c","r","m"])st[k].forEach(o=>o.id=id());isSample=!!st._sample;undo=null;renderAll();flash("Entries restored.")};
+};
+
+function summaryText(){const T=totals(),M=st.meta,L=[];
+  L.push("PRECAST WEIGHT — "+(M.prod||"Unit"));if(M.dwg)L.push("Drawing: "+M.dwg);if(M.by||M.date)L.push([M.by&&("By: "+M.by),M.date&&("Date: "+M.date)].filter(Boolean).join("  "));
+  L.push("");SECT.forEach(s=>{if(T.sec[s])L.push(`${s} volume: ${f(T.sec[s],3)} m³`)});
+  L.push(`Total concrete: ${f(T.vol,3)} m³ × ${f(T.dens,2)} kg/m³ = ${f(T.conc,3)} kg`);
+  L.push(`Rebar: ${f(T.bar,3)} kg`);if(T.mesh)L.push(`BRC mesh: ${f(T.mesh,3)} kg`);
+  L.push(`PRECAST WEIGHT: ${f(T.t,3)} tonne (${f(T.kg,3)} kg)`);return L.join("\n")}
+$("b-copy").onclick=async()=>{try{await navigator.clipboard.writeText(summaryText());flash("Summary copied.")}catch(e){flash("Copy was blocked by the browser.")}};
+
+$("b-pdf").onclick=()=>{
+  if(!window.jspdf){flash("PDF tool did not load. Use Copy summary instead.");return}
+  const T=totals(),M=st.meta,{jsPDF}=window.jspdf,doc=new jsPDF({unit:"mm",format:"a4"});
+  const hs={fillColor:[17,17,16],textColor:255,fontStyle:"bold"},base={styles:{fontSize:9,cellPadding:1.6},headStyles:hs,margin:{left:14,right:14},theme:"grid"};
+  doc.setFont("helvetica","bold");doc.setFontSize(16);doc.text("PRECAST WEIGHT CALCULATION",14,18);
+  doc.setFont("helvetica","normal");doc.setFontSize(10);
+  doc.autoTable({...base,startY:23,theme:"plain",styles:{fontSize:10,cellPadding:1},body:[["Product / unit",M.prod||"-","Drawing no.",M.dwg||"-"],["Prepared by",M.by||"-","Date",M.date||"-"]],columnStyles:{0:{fontStyle:"bold"},2:{fontStyle:"bold"}}});
+  doc.setFillColor(255,230,0);let y=doc.lastAutoTable.finalY+4;doc.rect(14,y,182,20,"F");
+  doc.setFontSize(11);doc.text("PRECAST WEIGHT PER UNIT",18,y+8);doc.setFont("helvetica","bold");doc.setFontSize(20);
+  doc.text(f(T.t,3)+" tonne",192,y+13,{align:"right"});doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text(f(T.kg,3)+" kg",18,y+15);
+  const right={halign:"right"};
+  doc.autoTable({...base,startY:y+26,head:[["Section","Description","Input","Qty","Volume (m³)"]],
+    body:st.c.map(o=>[o.s,(o.d||"")+(o.ded?" (deduct)":""),o.mode==="vol"?f(n(o.V),4)+" m³":`${n(o.L)}×${n(o.W)}×${n(o.T)} m`,n(o.q),f(cVol(o),4)]),
+    foot:[["","","","Total",f(T.vol,4)]],footStyles:{fillColor:[216,216,212],textColor:20,fontStyle:"bold"},columnStyles:{3:right,4:right}});
+  doc.autoTable({...base,startY:doc.lastAutoTable.finalY+5,head:[["Section","Bar","Nos","Length (m)","kg/m","Weight (kg)"]],
+    body:st.r.map(o=>[o.s,o.z,n(o.q),n(o.len),bw(o.z),f(rKg(o),3)]),foot:[["","","","","Total",f(T.bar,3)]],footStyles:{fillColor:[216,216,212],textColor:20,fontStyle:"bold"},columnStyles:{2:right,3:right,4:right,5:right}});
+  if(st.m.length)doc.autoTable({...base,startY:doc.lastAutoTable.finalY+5,head:[["Section","Mesh","Size (m)","Sheets","kg/m²","Weight (kg)"]],
+    body:st.m.map(o=>[o.s,o.z,`${n(o.L)}×${n(o.W)}`,n(o.q),f(meshKg(o),3),f(mKg(o),3)]),foot:[["","","","","Total",f(T.mesh,3)]],footStyles:{fillColor:[216,216,212],textColor:20,fontStyle:"bold"},columnStyles:{3:right,4:right,5:right}});
+  {const S=steel(),gray={fillColor:[216,216,212],textColor:20,fontStyle:"bold"},body=[];
+   S.rr.forEach(g=>body.push(["Rebar",g.k,g.marks.join(", "),f(g.nos,0),f(g.len,2)+" m",f(g.kg,3)]));
+   if(S.rr.length)body.push([{content:"Rebar subtotal",colSpan:5,styles:gray},{content:f(S.rkg,3),styles:{...gray,halign:"right"}}]);
+   S.mm.forEach(g=>body.push(["BRC",g.k,g.marks.join(", "),f(g.sh,0),f(g.area,2)+" m²",f(g.kg,3)]));
+   if(S.mm.length)body.push([{content:"BRC subtotal",colSpan:5,styles:gray},{content:f(S.mkg,3),styles:{...gray,halign:"right"}}]);
+   if(body.length)doc.autoTable({...base,startY:doc.lastAutoTable.finalY+5,head:[["Type","Bar / mesh","Sections","Nos / sheets","Length / area","Weight (kg)"]],body,
+     foot:[["","","","","Total steel",f(S.rkg+S.mkg,3)]],footStyles:{fillColor:[17,17,16],textColor:255,fontStyle:"bold"},columnStyles:{3:right,4:right,5:right}});}
+  doc.autoTable({...base,startY:doc.lastAutoTable.finalY+5,head:[["Summary","Value"]],columnStyles:{1:right},
+    body:[["Concrete volume",f(T.vol,3)+" m³"],["Concrete density",f(T.dens,2)+" kg/m³"],["Concrete weight",f(T.conc,3)+" kg"],["Rebar weight",f(T.bar,3)+" kg"],["BRC mesh weight",f(T.mesh,3)+" kg"],["PRECAST WEIGHT",f(T.t,3)+" tonne"]],
+    didParseCell:d=>{if(d.section==="body"&&d.row.index===5){d.cell.styles.fontStyle="bold";d.cell.styles.fillColor=[255,230,0]}}});
+  const name=((M.prod||"precast").replace(/[^\w\- ]+/g,"").trim()||"precast")+"_weight.pdf";
+  try{doc.save(name);flash("PDF saved.")}catch(e){flash("PDF could not be saved. Use Copy summary instead.")}
+};
+
+renderAll();
+const side=document.querySelector(".side");
+const fit=()=>side.classList.toggle("tall",side.offsetHeight>innerHeight-24);
+const sro=new ResizeObserver(fit);sro.observe(side);addEventListener("resize",fit);
+}
+</script>
+</body>
+</html>
